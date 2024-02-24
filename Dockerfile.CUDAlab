@@ -1,0 +1,9 @@
+ARG ROOT_CONTAINER=localhost/jupyter-lab0:lab0lab-2024-xx
+FROM $ROOT_CONTAINER
+
+RUN if [ "${UNAMEM2}" == "x86_64" ]; then CPU_TARGET="generic;sandybridge,-xsaveopt,clone_all;haswell,-rdrnd,base(1)"; fi && \
+    if [ "${UNAMEM2}" == "aarch64" ]; then CPU_TARGET="generic;neoverse-n1"; fi && \
+    CONDA_JL_HOME=/opt/conda JULIA_CPU_TARGET=${CPU_TARGET:=generic} \
+    julia --threads auto --compiled-modules=no --eval "import Pkg; Pkg.add.([\"CUDA\"])" && \
+    julia --eval "using InteractiveUtils; versioninfo()" && \
+    julia --eval "@ccall jl_dump_host_cpu()::Cvoid"

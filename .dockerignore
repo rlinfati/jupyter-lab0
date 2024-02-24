@@ -1,0 +1,11 @@
+# .dockerignore
+.git
+.github
+.dockerignore
+.gitignore
+LICENSE
+README.md
+# .gitignore
+README.local
+libAMPL
+libCONDA

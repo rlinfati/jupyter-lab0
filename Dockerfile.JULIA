@@ -1,0 +1,55 @@
+FROM registry.access.redhat.com/ubi9/ubi
+
+USER root
+WORKDIR /tmp/
+ENV PATH=$PATH:/opt/conda/bin/
+
+VOLUME /mnt/
+VOLUME /media/
+EXPOSE 8888/tcp
+
+# unix tools: git, top, unzip, zip
+RUN dnf --assumeyes install git-core procps-ng unzip zip && \
+    dnf clean all
+
+# Jupyter LAB and Pluto
+RUN curl --remote-name https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-$(uname -m).sh && \
+    bash Miniconda3-latest-Linux-$(uname -m).sh -b -p /opt/conda && \
+    conda install --yes jupyterlab jupyterhub-singleuser && \
+    conda install --yes --channel defaults --channel conda-forge jupyter-pluto-proxy && \
+    rm Miniconda3-latest-Linux-$(uname -m).sh && \
+    conda clean --all --yes && \
+    jupyter --version && \
+    jupyterhub --version
+
+# Julia
+RUN JULIA_VERSION=1.10 && \
+    mkdir /opt/julia-${JULIA_VERSION} && \
+    UNAMEM1=$(uname -m) && \
+    UNAMEM2=$(uname -m) && \
+    if [ "${UNAMEM2}" == "x86_64" ]; then UNAMEM1="x64"; fi && \
+    curl --location --remote-name https://julialang-s3.julialang.org/bin/linux/${UNAMEM1}/${JULIA_VERSION}/julia-${JULIA_VERSION}-latest-linux-${UNAMEM2}.tar.gz && \
+    tar xzf julia-${JULIA_VERSION}-latest-linux-${UNAMEM2}.tar.gz -C /opt/julia-${JULIA_VERSION} --strip-components=1 && \
+    rm julia-${JULIA_VERSION}-latest-linux-${UNAMEM2}.tar.gz && \
+    ln --symbolic /opt/julia-${JULIA_VERSION}/bin/julia /usr/local/bin/julia && \
+    julia --version
+
+ENTRYPOINT ["jupyterhub-singleuser"]
+CMD [""]
+
+RUN useradd --create-home --no-user-group luser
+
+USER luser
+WORKDIR /home/luser/
+
+# temp FIX
+ENV JULIA_SSL_CA_ROOTS_PATH=/opt/julia-1.10/share/julia/cert.pem
+
+RUN ln --symbolic /mnt   $HOME/x-Private && \
+    ln --symbolic /media $HOME/x-Shared  && \
+    if [ "${UNAMEM2}" == "x86_64" ]; then CPU_TARGET="generic;sandybridge,-xsaveopt,clone_all;haswell,-rdrnd,base(1)"; fi && \
+    if [ "${UNAMEM2}" == "aarch64" ]; then CPU_TARGET="generic;neoverse-n1"; fi && \
+    CONDA_JL_HOME=/opt/conda JULIA_CPU_TARGET=${CPU_TARGET:=generic} \
+    julia --threads auto --eval "import Pkg; Pkg.add.([\"IJulia\", \"Pluto\"])" && \
+    julia --eval "using InteractiveUtils; versioninfo()" && \
+    julia --eval "@ccall jl_dump_host_cpu()::Cvoid"

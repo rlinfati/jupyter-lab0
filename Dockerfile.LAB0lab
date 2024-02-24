@@ -1,0 +1,5 @@
+ARG ROOT_CONTAINER=localhost/jupyter-lab0:lab0-2024-xx
+FROM $ROOT_CONTAINER
+
+ENTRYPOINT ["jupyter-lab"]
+CMD ["--no-browser", "--ip=0.0.0.0"]
