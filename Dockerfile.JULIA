@@ -42,9 +42,6 @@ RUN useradd --create-home --no-user-group luser
 USER luser
 WORKDIR /home/luser/
 
-# temp FIX
-ENV JULIA_SSL_CA_ROOTS_PATH=/opt/julia-1.10/share/julia/cert.pem
-
 RUN ln --symbolic /mnt   $HOME/x-Private && \
     ln --symbolic /media $HOME/x-Shared  && \
     if [ "${UNAMEM2}" == "x86_64" ]; then CPU_TARGET="generic;sandybridge,-xsaveopt,clone_all;haswell,-rdrnd,base(1)"; fi && \

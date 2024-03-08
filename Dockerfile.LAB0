@@ -3,7 +3,6 @@ FROM $ROOT_CONTAINER
 
 USER root
 WORKDIR /tmp/
-ENV PATH=$PATH:/opt/conda/bin/
 
 # CPLEX
 RUN if [[ $(uname -m) == "x86_64" ]]; then true; else exit 0; fi && \
