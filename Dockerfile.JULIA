@@ -1,0 +1,49 @@
+FROM registry.access.redhat.com/ubi9/ubi
+
+USER root
+WORKDIR /tmp/
+
+ENV PATH=$PATH:/opt/conda/bin/
+ARG CPU_TARGET="generic;sandybridge,-xsaveopt,clone_all;haswell,-rdrnd,base(1);x86-64-v4,-rdrnd,base(1)"
+ENV JULIA_CPU_TARGET=$CPU_TARGET
+
+ARG JULIA_VERSION=1.10
+ARG CONDA_JL_HOME=/opt/conda
+ARG UNAMEM1=x64
+
+EXPOSE 8888/tcp
+
+# unix tools: git, top, unzip, zip
+RUN dnf --assumeyes install git-core procps-ng unzip zip && \
+    dnf clean all
+
+# Jupyter LAB and Pluto
+RUN curl --remote-name https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-$(uname -m).sh && \
+    bash Miniconda3-latest-Linux-$(uname -m).sh -b -p /opt/conda && \
+    conda install --yes jupyterlab jupyterhub-singleuser && \
+    conda install --yes --channel defaults --channel conda-forge jupyter-pluto-proxy && \
+    rm Miniconda3-latest-Linux-$(uname -m).sh && \
+    conda clean --all --yes && \
+    jupyter --version && \
+    jupyterhub --version
+
+# Julia
+RUN mkdir /opt/julia-${JULIA_VERSION} && \
+    curl --location --remote-name https://julialang-s3.julialang.org/bin/linux/${UNAMEM1}/${JULIA_VERSION}/julia-${JULIA_VERSION}-latest-linux-$(uname -m).tar.gz && \
+    tar xzf julia-${JULIA_VERSION}-latest-linux-$(uname -m).tar.gz -C /opt/julia-${JULIA_VERSION} --strip-components=1 && \
+    rm julia-${JULIA_VERSION}-latest-linux-$(uname -m).tar.gz && \
+    ln --symbolic /opt/julia-${JULIA_VERSION}/bin/julia /usr/local/bin/julia && \
+    julia --version
+
+ENTRYPOINT ["jupyterhub-singleuser"]
+CMD [""]
+
+RUN useradd --create-home --no-user-group jovyan
+VOLUME /home/jovyan/work
+
+USER jovyan
+WORKDIR /home/jovyan/
+
+RUN julia --eval "using InteractiveUtils; versioninfo()" && \
+    julia --eval "@ccall jl_dump_host_cpu()::Cvoid" && \
+    julia --threads auto --eval "import Pkg; Pkg.add.([\"IJulia\", \"Pluto\"])"

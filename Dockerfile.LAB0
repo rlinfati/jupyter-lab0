@@ -1,0 +1,41 @@
+ARG ROOT_CONTAINER=localhost/jupyter-lab0:julia-2024-xx
+FROM $ROOT_CONTAINER
+
+USER root
+WORKDIR /tmp/
+
+# CPLEX
+RUN if [[ $(uname -m) == "x86_64" ]]; then true; else exit 0; fi && \
+    conda create --yes --name pycpx --no-deps --channel ibmdecisionoptimization cplex && \
+    conda clean --all --yes && \
+    ls /opt/conda/pkgs/cplex-*/lib/python*/site-packages/cplex/_internal/libcplex*.so && \
+    ln /opt/conda/pkgs/cplex-*/lib/python*/site-packages/cplex/_internal/libcplex*.so /usr/local/lib
+
+# Gurobi
+RUN conda create --yes --name pygrb --no-deps --channel gurobi gurobi && \
+    conda clean --all --yes && \
+    ls /opt/conda/pkgs/gurobi-*/lib/libgurobi*.so && \
+    ln /opt/conda/pkgs/gurobi-*/lib/libgurobi*.so /usr/local/lib
+
+# GUROBIWLS
+RUN --mount=type=secret,id=GUROBIWLS mkdir /opt/gurobi/ && \
+    cat /run/secrets/GUROBIWLS | tee /opt/gurobi/gurobi.lic
+
+# Xpress
+RUN conda create --yes --name pyxpr --no-deps --channel fico-xpress xpress && \
+    conda clean --all --yes && \
+    ls /opt/conda/pkgs/xpress-*/lib/python*/site-packages/xpress/lib/libxprs.so* && \
+    ln /opt/conda/pkgs/xpress-*/lib/python*/site-packages/xpress/lib/libxprs.so* /usr/local/lib && \
+    ln /opt/conda/pkgs/xpress-*/lib/python*/site-packages/xpress/lib/libxprs.so* /usr/local/lib/libxprs.so && \
+    ls /opt/conda/pkgs/xpress-*/lib/python*/site-packages/xpress/lib/libxprl.so* && \
+    ln /opt/conda/pkgs/xpress-*/lib/python*/site-packages/xpress/lib/libxprl.so* /usr/local/lib && \
+    ls /opt/conda/pkgs/xpress-*/lib/python*/site-packages/xpress/license/*xpr && \
+    ln /opt/conda/pkgs/xpress-*/lib/python*/site-packages/xpress/license/*xpr /usr/local/lib/xpauth.xpr
+
+USER jovyan
+WORKDIR /home/jovyan/
+
+COPY setup.jl /opt/
+RUN julia --eval "using InteractiveUtils; versioninfo()" && \
+    julia --eval "@ccall jl_dump_host_cpu()::Cvoid" && \
+    julia --threads auto /opt/setup.jl

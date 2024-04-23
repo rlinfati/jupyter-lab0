@@ -1,0 +1,38 @@
+name: Docker
+on:
+  push:
+    branches: [ "master" ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - uses: docker/build-push-action@v5
+        with:
+          push: true
+          file: Dockerfile.HUB
+          tags: rlinfati/jupyter-lab0:hub-2024-xx
+      - uses: docker/build-push-action@v5
+        with:
+          push: true
+          file: Dockerfile.JULIA
+          tags: rlinfati/jupyter-lab0:julia-2024-xx
+      - uses: docker/build-push-action@v5
+        with:
+          push: true
+          file: Dockerfile.LAB0
+          build-args: ROOT_CONTAINER=docker.io/rlinfati/jupyter-lab0:julia-2024-xx
+          secrets: |
+            "GUROBIWLS=${{ secrets.GUROBIWLS }}"
+          tags: rlinfati/jupyter-lab0:lab0-2024-xx
+      - uses: docker/build-push-action@v5
+        with:
+          push: true
+          file: Dockerfile.CUDAlab
+          build-args: ROOT_CONTAINER=docker.io/rlinfati/jupyter-lab0:lab0-2024-xx
+          tags: rlinfati/jupyter-lab0:cudalab-2024-xx

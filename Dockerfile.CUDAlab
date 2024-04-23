@@ -1,0 +1,9 @@
+ARG ROOT_CONTAINER=localhost/jupyter-lab0:lab0-2024-xx
+FROM $ROOT_CONTAINER
+
+ENTRYPOINT ["jupyter-lab"]
+CMD ["--no-browser", "--ip=0.0.0.0"]
+
+RUN julia --eval "using InteractiveUtils; versioninfo()" && \
+    julia --eval "@ccall jl_dump_host_cpu()::Cvoid" && \
+    julia --threads auto --compiled-modules=no --eval "import Pkg; Pkg.add(\"CUDA\")"
