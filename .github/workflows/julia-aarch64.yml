@@ -1,0 +1,56 @@
+name: Julia aarch64 version
+on:
+  workflow_dispatch:
+jobs:
+  ORlibs-aarch64:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker
+          platforms: linux/arm64
+      - uses: docker/build-push-action@v5
+        with:
+          file: Dockerfile.ORlibs
+          platforms: linux/arm64
+          build-args: |
+            UNAMEM1=aarch64
+            CPU_TARGET=generic
+          secrets: |
+            "GUROBIWLS=${{ secrets.GUROBIWLS }}"
+  build-aarch64:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker
+          platforms: linux/arm64
+      - uses: docker/build-push-action@v5
+        with:
+          file: Dockerfile.HUB
+          platforms: linux/arm64
+          tags: rlinfati/jupyter-lab0:hub-999
+      - uses: docker/build-push-action@v5
+        with:
+          file: Dockerfile.JULIA
+          platforms: linux/arm64
+          build-args: |
+            UNAMEM1=aarch64
+            CPU_TARGET=generic
+          tags: rlinfati/jupyter-lab0:julia-999
+      - uses: docker/build-push-action@v5
+        with:
+          file: Dockerfile.LAB0
+          platforms: linux/arm64
+          secrets: |
+            "GUROBIWLS=${{ secrets.GUROBIWLS }}"
+          tags: rlinfati/jupyter-lab0:lab0-999
+      - uses: docker/build-push-action@v5
+        with:
+          file: Dockerfile.CUDAlab
+          platforms: linux/arm64
+          tags: rlinfati/jupyter-lab0:cudalab-999

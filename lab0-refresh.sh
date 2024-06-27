@@ -15,10 +15,15 @@ sudo podman pull quay.io/jupyter/pytorch-notebook:latest
 sudo podman image prune --force
 
 if [[ $(uname -m) == "x86_64" ]]; then
-    sudo podman pull docker.io/rlinfati/jupyter-lab0:hub-2024-xx
-    sudo podman pull docker.io/rlinfati/jupyter-lab0:julia-2024-xx
-    sudo podman pull docker.io/rlinfati/jupyter-lab0:lab0-2024-xx
-    sudo podman pull docker.io/rlinfati/jupyter-lab0:cudalab-2024-xx
+    sudo podman pull docker.io/rlinfati/jupyter-lab0:hub-999
+    sudo podman pull docker.io/rlinfati/jupyter-lab0:julia-999
+    sudo podman pull docker.io/rlinfati/jupyter-lab0:lab0-999
+    sudo podman pull docker.io/rlinfati/jupyter-lab0:cudalab-999
+
+    sudo podman pull docker.io/rlinfati/jupyter-lab0:hub-110
+    sudo podman pull docker.io/rlinfati/jupyter-lab0:julia-110
+    sudo podman pull docker.io/rlinfati/jupyter-lab0:lab0-110
+    sudo podman pull docker.io/rlinfati/jupyter-lab0:cudalab-110
 
     sudo podman pull docker.io/rlinfati/jupyter-lab0:hub-2024-03
     sudo podman pull docker.io/rlinfati/jupyter-lab0:julia-2024-03
@@ -27,10 +32,10 @@ if [[ $(uname -m) == "x86_64" ]]; then
 
     sudo podman image prune --force
 else
-    sudo podman build --tag jupyter-lab0:hub-2024-xx github.com/rlinfati/jupyter-lab0 --file Dockerfile.HUB
-    sudo podman build --tag jupyter-lab0:julia-2024-xx github.com/rlinfati/jupyter-lab0 --file Dockerfile.JULIA --build-arg UNAMEM1=aarch64 --build-arg CPU_TARGET="neoverse-n1"
-    sudo podman build --tag jupyter-lab0:lab0-2024-xx github.com/rlinfati/jupyter-lab0 --file Dockerfile.LAB0 --secret id=GUROBIWLS
-    sudo podman build --tag jupyter-lab0:cudalab-2024-xx github.com/rlinfati/jupyter-lab0 --file Dockerfile.CUDAlab
+    sudo podman build --tag rlinfati/jupyter-lab0:hub-999       github.com/rlinfati/jupyter-lab0 --file Dockerfile.HUB
+    sudo podman build --tag rlinfati/jupyter-lab0:julia-999     github.com/rlinfati/jupyter-lab0 --file Dockerfile.JULIA --build-arg UNAMEM1=aarch64 --build-arg CPU_TARGET="neoverse-n1"
+    sudo podman build --tag rlinfati/jupyter-lab0:lab0-999      github.com/rlinfati/jupyter-lab0 --file Dockerfile.LAB0 --secret id=GUROBIWLS
+    sudo podman build --tag rlinfati/jupyter-lab0:cudalab-999   github.com/rlinfati/jupyter-lab0 --file Dockerfile.CUDAlab
 
     sudo podman image prune --force
 fi

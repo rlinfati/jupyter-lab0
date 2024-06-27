@@ -4,6 +4,7 @@ USER root
 WORKDIR /tmp/
 
 ENV PATH=$PATH:/opt/conda/bin/
+# https://github.com/JuliaCI/julia-buildkite/blob/main/utilities/build_envs.sh
 ARG CPU_TARGET="generic;sandybridge,-xsaveopt,clone_all;haswell,-rdrnd,base(1);x86-64-v4,-rdrnd,base(1)"
 ENV JULIA_CPU_TARGET=$CPU_TARGET
 

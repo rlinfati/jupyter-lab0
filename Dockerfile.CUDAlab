@@ -1,4 +1,4 @@
-ARG ROOT_CONTAINER=localhost/jupyter-lab0:lab0-2024-xx
+ARG ROOT_CONTAINER=rlinfati/jupyter-lab0:lab0-999
 FROM $ROOT_CONTAINER
 
 ENTRYPOINT ["jupyter-lab"]

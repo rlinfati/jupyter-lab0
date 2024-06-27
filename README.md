@@ -18,10 +18,10 @@
 - quay.io/jupyter/r-notebook:latest \
 - quay.io/jupyter/tensorflow-notebook:latest \
 - quay.io/jupyter/pytorch-notebook:latest \
-- docker.io/rlinfati/jupyter-lab0:julia-2024-xx \
-- docker.io/rlinfati/jupyter-lab0:lab0-2024-xx \
-- localhost/jupyter-lab0:julia-2024-xx \
-- localhost/jupyter-lab0:lab0-2024-xx | sudo podman secret create J0-dockerImages -
+- docker.io/rlinfati/jupyter-lab0:julia-999 \
+- docker.io/rlinfati/jupyter-lab0:lab0-999 \
+- rlinfati/jupyter-lab0:julia-999 \
+- rlinfati/jupyter-lab0:lab0-999 | sudo podman secret create J0-dockerImages -
 ## Jupyter Secrets oauth2
 - printf client-id-code | sudo podman secret create J0-client_id -
 - printf client-secret-code | sudo podman secret create J0-client_secret -
@@ -35,37 +35,37 @@
 - sudo podman pull quay.io/jupyter/tensorflow-notebook:latest
 - sudo podman pull quay.io/jupyter/pytorch-notebook:latest
 ## Jupyter Lab0
-- sudo podman pull docker.io/rlinfati/jupyter-lab0:hub-2024-xx
-- sudo podman pull docker.io/rlinfati/jupyter-lab0:julia-2024-xx
-- sudo podman pull docker.io/rlinfati/jupyter-lab0:lab0-2024-xx
-- sudo podman pull docker.io/rlinfati/jupyter-lab0:cudalab-2024-xx
+- sudo podman pull docker.io/rlinfati/jupyter-lab0:hub-999
+- sudo podman pull docker.io/rlinfati/jupyter-lab0:julia-999
+- sudo podman pull docker.io/rlinfati/jupyter-lab0:lab0-999
+- sudo podman pull docker.io/rlinfati/jupyter-lab0:cudalab-999
 ## Jupyter Lab0 upload
 - sudo podman login docker.io
-- sudo podman push docker.io/rlinfati/jupyter-lab0:hub-2024-xx     docker.io/rlinfati/jupyter-lab0:hub-2024-xx
-- sudo podman push docker.io/rlinfati/jupyter-lab0:julia-2024-xx   docker.io/rlinfati/jupyter-lab0:julia-2024-xx
-- sudo podman push docker.io/rlinfati/jupyter-lab0:lab0-2024-xx    docker.io/rlinfati/jupyter-lab0:lab0-2024-xx
-- sudo podman push docker.io/rlinfati/jupyter-lab0:cudalab-2024-xx docker.io/rlinfati/jupyter-lab0:cudalab-2024-xx
+- sudo podman push docker.io/rlinfati/jupyter-lab0:hub-999     docker.io/rlinfati/jupyter-lab0:hub-999
+- sudo podman push docker.io/rlinfati/jupyter-lab0:julia-999   docker.io/rlinfati/jupyter-lab0:julia-999
+- sudo podman push docker.io/rlinfati/jupyter-lab0:lab0-999    docker.io/rlinfati/jupyter-lab0:lab0-999
+- sudo podman push docker.io/rlinfati/jupyter-lab0:cudalab-999 docker.io/rlinfati/jupyter-lab0:cudalab-999
 
 ## Podman network dns_enabled
 - sudo podman network inspect podman | jq .[] | sed s/dns_enabled\":\ false/dns_enabled\":\ true/g | sudo tee /etc/containers/networks/podman.json
 - sudo systemctl enable --now podman
 
 ## Jupyter Build
-- sudo podman build --tag jupyter-lab0:hub-2024-xx     github.com/rlinfati/jupyter-lab0 --file Dockerfile.HUB
-- sudo podman build --tag jupyter-lab0:julia-2024-xx   github.com/rlinfati/jupyter-lab0 --file Dockerfile.JULIA
-- sudo podman build --tag jupyter-lab0:lab0-2024-xx    github.com/rlinfati/jupyter-lab0 --file Dockerfile.LAB0
-- sudo podman build --tag jupyter-lab0:cudalab-2024-xx github.com/rlinfati/jupyter-lab0 --file Dockerfile.CUDAlab
+- sudo podman build --tag rlinfati/jupyter-lab0:hub-999     github.com/rlinfati/jupyter-lab0 --file Dockerfile.HUB
+- sudo podman build --tag rlinfati/jupyter-lab0:julia-999   github.com/rlinfati/jupyter-lab0 --file Dockerfile.JULIA
+- sudo podman build --tag rlinfati/jupyter-lab0:lab0-999    github.com/rlinfati/jupyter-lab0 --file Dockerfile.LAB0
+- sudo podman build --tag rlinfati/jupyter-lab0:cudalab-999 github.com/rlinfati/jupyter-lab0 --file Dockerfile.CUDAlab
 
 ## Jupyter Run https
 - sudo podman create --interactive --tty --oom-score-adj 901 --init --name jupyter-https --replace --publish 80:80 --publish 443:443 docker.io/library/caddy caddy reverse-proxy --from server.domain.tld --to http://jupyter-lab0:8000
 - sudo podman start jupyter-https
 - sudo podman logs -f jupyter-https
 ## Jupyter Run hub
-- sudo podman create --interactive --tty --oom-score-adj 902 --init --name jupyter-lab0  --replace --secret J0-admin_users --secret J0-dockerImages --secret J0-client_id --secret J0-client_secret --secret J0-tenant_id --secret J0-oauth_callback_url --volume /run/podman/podman.sock:/var/run/docker.sock --privileged docker.io/rlinfati/jupyter-lab0:hub-2024-xx
+- sudo podman create --interactive --tty --oom-score-adj 902 --init --name jupyter-lab0  --replace --secret J0-admin_users --secret J0-dockerImages --secret J0-client_id --secret J0-client_secret --secret J0-tenant_id --secret J0-oauth_callback_url --volume /run/podman/podman.sock:/var/run/docker.sock --privileged docker.io/rlinfati/jupyter-lab0:hub-999
 - sudo podman start jupyter-lab0
 - sudo podman logs -f jupyter-lab0
 ## Jupyter Run hub w/o https
-- sudo podman create --interactive --tty --oom-score-adj 902 --init --name jupyter-lab0  --replace --publish 8000:8000 --secret J0-admin_users --secret J0-dockerImages --secret J0-client_id --secret J0-client_secret --secret J0-tenant_id --secret J0-oauth_callback_url --volume /run/podman/podman.sock:/var/run/docker.sock --privileged docker.io/rlinfati/jupyter-lab0:hub-2024-xx
+- sudo podman create --interactive --tty --oom-score-adj 902 --init --name jupyter-lab0  --replace --publish 8000:8000 --secret J0-admin_users --secret J0-dockerImages --secret J0-client_id --secret J0-client_secret --secret J0-tenant_id --secret J0-oauth_callback_url --volume /run/podman/podman.sock:/var/run/docker.sock --privileged docker.io/rlinfati/jupyter-lab0:hub-999
 
 ## Jupyter Service
 - sudo podman generate systemd --name jupyter-https | grep -v PIDFile | sudo tee /etc/systemd/system/jupyter-https.service
@@ -86,7 +86,7 @@
 - sudo podman run --rm -it --device=nvidia.com/gpu=all --entrypoint=bash docker.io/library/julia
 
 ## Jupyter CUDAlab Run
-- sudo podman create --interactive --tty --oom-score-adj 999 --init --name jupyter-CUDAlab --replace --publish 8888:8888 --volume jupyter-user-CUDAlab:/home/jovyan/work --device=nvidia.com/gpu=all docker.io/rlinfati/jupyter-lab0:cudalab-2024-xx
+- sudo podman create --interactive --tty --oom-score-adj 999 --init --name jupyter-CUDAlab --replace --publish 8888:8888 --volume jupyter-user-CUDAlab:/home/jovyan/work --device=nvidia.com/gpu=all docker.io/rlinfati/jupyter-lab0:cudalab-999
 - sudo podman start jupyter-CUDAlab
 - sudo podman logs -f jupyter-CUDAlab
 - sudo podman generate systemd --name jupyter-CUDAlab | grep -v PIDFile | sudo tee /etc/systemd/system/jupyter-CUDAlab.service
