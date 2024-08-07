@@ -24,6 +24,3 @@ Sys.KERNEL == :Linux && Sys.ARCH == :x86_64 && push!(pkgall, "Xpress")
 Sys.KERNEL == :Linux && Sys.ARCH == :aarch64 && push!(pkgall, "Xpress")
 
 Pkg.add(pkgall; preserve=Pkg.PRESERVE_TIERED_INSTALLED)
-
-import IJulia
-IJulia.installkernel("Julia")
