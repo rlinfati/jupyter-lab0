@@ -1,0 +1,13 @@
+# jupyter-CUDAlab.container
+
+[Container]
+Image=docker.io/rlinfati/jupyter-lab0:cudalab-111
+AutoUpdate=registry
+RunInit=true
+Volume=jupyter-user-CUDAlab:/home/jovyan/work
+PublishPort=8888:8888
+ShmSize=1024m
+PodmanArgs=--device=nvidia.com/gpu=all
+
+[Install]
+WantedBy=multi-user.target
