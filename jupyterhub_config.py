@@ -19,7 +19,7 @@ c.DockerSpawner.use_internal_ip = True
 c.DockerSpawner.network_name = "podman"
 c.DockerSpawner.remove = True
 c.DockerSpawner.volumes = { "jupyter-user-{username}": '/home/jovyan/work' }
-c.DockerSpawner.extra_host_config = { "oom_score_adj": 1000, "init": True }
+c.DockerSpawner.extra_host_config = { "oom_score_adj": 999, "init": True }
 c.DockerSpawner.allowed_images = [dockerImages.strip() for dockerImages in open('/run/secrets/J0-dockerImages')]
 
 c.JupyterHub.services = [ { "name": "jupyterhub-idle-culler-service",

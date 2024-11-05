@@ -1,0 +1,12 @@
+# caddy-reloj.container
+
+[Container]
+Image=docker.io/library/caddy
+AutoUpdate=registry
+RunInit=true
+Exec=caddy file-server --root /usr/share/caddy/ --domain reloj.ubb.menoscero.com
+Network=vlan130-synco.network
+IP=146.83.193.157
+
+[Install]
+WantedBy=multi-user.target
