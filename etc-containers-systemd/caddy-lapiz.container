@@ -1,0 +1,12 @@
+# caddy-lapiz.container
+
+[Container]
+Image=docker.io/library/caddy
+AutoUpdate=registry
+RunInit=true
+Exec=caddy file-server --root /usr/share/caddy/ --domain lapiz.ubb.menoscero.com
+Network=vlan130-cosyn.network
+IP=146.83.193.152
+
+[Install]
+WantedBy=multi-user.target

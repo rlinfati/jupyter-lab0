@@ -1,0 +1,7 @@
+# vlan130-synco.network
+
+[Network]
+Driver=macvlan
+Subnet=146.83.193.128/26
+Gateway=146.83.193.129
+Options=parent=breth10

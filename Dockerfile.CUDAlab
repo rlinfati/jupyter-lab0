@@ -1,9 +1,20 @@
-ARG ROOT_CONTAINER=localhost/jupyter-lab0:lab0-2024-xx
+ARG ROOT_CONTAINER=rlinfati/jupyter-lab0:julia-999
 FROM $ROOT_CONTAINER
 
 ENTRYPOINT ["jupyter-lab"]
 CMD ["--no-browser", "--ip=0.0.0.0"]
+HEALTHCHECK CMD curl --fail http://127.0.0.1:8888/lab || exit 1
 
-RUN julia --eval "using InteractiveUtils; versioninfo()" && \
-    julia --eval "@ccall jl_dump_host_cpu()::Cvoid" && \
-    julia --threads auto --compiled-modules=no --eval "import Pkg; Pkg.add(\"CUDA\")"
+RUN julia --threads auto --eval "using InteractiveUtils; versioninfo(); @ccall jl_dump_host_cpu()::Cvoid"
+
+RUN julia --threads auto <<EOF
+    import Pkg
+    Pkg.add("CUDA")
+    import CUDA
+    CUDA.set_runtime_version!(v"12.2")
+EOF
+
+RUN julia --threads auto <<EOF
+    import CUDA
+    CUDA.precompile_runtime()
+EOF

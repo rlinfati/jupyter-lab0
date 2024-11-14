@@ -1,0 +1,18 @@
+# jupyter-hub.container
+
+[Container]
+Image=docker.io/rlinfati/jupyter-lab0:hub-999
+AutoUpdate=registry
+RunInit=true
+Secret=J0-admin_users
+Secret=J0-dockerImages
+Secret=J0-client_id
+Secret=J0-client_secret
+Secret=J0-tenant_id
+Secret=J0-oauth_callback_url 
+Volume=/run/podman/podman.sock:/var/run/docker.sock
+PublishPort=8000:8000
+PodmanArgs=--privileged
+
+[Install]
+WantedBy=multi-user.target

@@ -1,10 +1,10 @@
 # .dockerignore
-.dockerignore
 .git
 .github
+etc-containers-systemd
+.dockerignore
 .gitignore
-LICENSE
-README.md
 lab0-backup.sh
 lab0-refresh.sh
-lab0-reload.sh
+LICENSE
+README.md

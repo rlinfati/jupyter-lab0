@@ -1,0 +1,12 @@
+# caddy-fenix.container
+
+[Container]
+Image=docker.io/library/caddy
+AutoUpdate=registry
+RunInit=true
+Exec=caddy file-server --root /usr/share/caddy/ --domain fenix.ubb.menoscero.com
+Network=vlan130-cosyn.network
+IP=146.83.193.155
+
+[Install]
+WantedBy=multi-user.target

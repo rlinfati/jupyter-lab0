@@ -1,0 +1,11 @@
+# jupyter-https-grujh.container
+
+[Container]
+Image=docker.io/library/caddy
+RunInit=true
+Exec=caddy reverse-proxy --from grujh.menoscero.com --to http://systemd-jupyter-hub:8000
+PublishPort=80:80
+PublishPort=443:443
+
+[Install]
+WantedBy=multi-user.target
