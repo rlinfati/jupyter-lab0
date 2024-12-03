@@ -1,0 +1,37 @@
+FROM registry.access.redhat.com/ubi9/ubi
+
+USER root
+WORKDIR /tmp/
+
+ENV PATH=$PATH:/opt/conda/bin/
+EXPOSE 8888/tcp
+
+# unix tools: git, top, unzip, zip
+RUN dnf --assumeyes install git-core procps-ng unzip zip && \
+    dnf clean all
+
+# Jupyter LAB
+RUN curl --remote-name https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-$(uname -m).sh && \
+    bash Miniconda3-latest-Linux-$(uname -m).sh -b -p /opt/conda && \
+    conda install --yes jupyterlab && \
+    conda install --yes jupyterhub-singleuser && \
+    conda install --yes nb_conda_kernels && \
+    rm Miniconda3-latest-Linux-$(uname -m).sh && \
+    conda clean --all --yes && \
+    conda info && \
+    jupyter --version && \
+    jupyterhub --version
+
+ENTRYPOINT ["jupyterhub-singleuser"]
+CMD [""]
+HEALTHCHECK CMD curl http://127.0.0.1:8888 || exit 1
+
+RUN useradd --create-home --no-user-group jovyan
+VOLUME /home/jovyan/work
+
+USER jovyan
+WORKDIR /home/jovyan/
+
+# Anaconda
+RUN conda create --yes --name Anaconda anaconda && \
+    conda clean --all --yes

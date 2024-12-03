@@ -1,6 +1,6 @@
 import Pkg
 
-pkgall = ["IJulia", "Pluto"]
+pkgall = ["IJulia"]
 push!(pkgall, "Plots")
 push!(pkgall, "JuMP", "GLPK", "HiGHS")
 push!(pkgall, "DataFrames", "Distributions", "CSV", "JSON", "XLSX")

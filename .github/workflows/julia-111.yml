@@ -2,7 +2,7 @@ name: Julia 1.11
 on:
   workflow_dispatch:
   workflow_run:
-    workflows: [Julia 1.10]
+    workflows: [Julia ORlib]
     types:
       - completed
 jobs:
@@ -30,7 +30,14 @@ jobs:
       - uses: docker/build-push-action@v5
         with:
           push: true
-          file: Dockerfile.CUDAlab
+          file: Dockerfile.JULIACUDA
           build-args: |
             ROOT_CONTAINER=rlinfati/jupyter-lab0:julia-111
+          tags: rlinfati/jupyter-lab0:juliacuda-111
+      - uses: docker/build-push-action@v5
+        with:
+          push: true
+          file: Dockerfile.CUDAlab
+          build-args: |
+            ROOT_CONTAINER=rlinfati/jupyter-lab0:juliacuda-111
           tags: rlinfati/jupyter-lab0:cudalab-111

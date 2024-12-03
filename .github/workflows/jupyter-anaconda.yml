@@ -1,7 +1,7 @@
-name: Julia JHUB
+name: Jupyter Anaconda
 on:
   workflow_dispatch:
-  push:
+  #push:
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -17,12 +17,5 @@ jobs:
       - uses: docker/build-push-action@v5
         with:
           push: true
-          file: Dockerfile.HUB
-          tags: rlinfati/jupyter-lab0:hub-999
-      - uses: docker/build-push-action@v5
-        with:
-          file: Dockerfile.ORlib
-          build-args: |
-            JULIA_VERSION=nightly
-          secrets: |
-            "GUROBIWLS=${{ secrets.GUROBIWLS }}"
+          file: Dockerfile.Anaconda
+          tags: rlinfati/jupyter-lab0:Anaconda-999

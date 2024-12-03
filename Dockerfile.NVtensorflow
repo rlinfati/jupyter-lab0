@@ -1,0 +1,20 @@
+FROM nvcr.io/nvidia/tensorflow:24.11-tf2-py3
+
+USER root
+WORKDIR /tmp/
+
+EXPOSE 8888/tcp
+
+RUN python -m pip --no-cache-dir install jupyterhub && \
+    jupyter --version && \
+    jupyterhub --version
+
+ENTRYPOINT ["jupyterhub-singleuser"]
+CMD [""]
+HEALTHCHECK CMD curl http://127.0.0.1:8888 || exit 1
+
+RUN useradd --create-home --no-user-group jovyan
+VOLUME /home/jovyan/work
+
+USER jovyan
+WORKDIR /home/jovyan/
