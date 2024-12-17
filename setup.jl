@@ -1,6 +1,6 @@
 import Pkg
 
-pkgall = ["IJulia", "Pluto"]
+pkgall = ["IJulia"]
 push!(pkgall, "Plots")
 push!(pkgall, "JuMP", "GLPK", "HiGHS")
 push!(pkgall, "DataFrames", "Distributions", "CSV", "JSON", "XLSX")
@@ -10,6 +10,7 @@ push!(pkgall, "BenchmarkTools")
 
 haskey(ENV, "CPLEX_STUDIO_BINARIES") == false && (ENV["CPLEX_STUDIO_BINARIES"] = "/usr/local/lib")
 haskey(ENV, "GUROBI_HOME") == false && (ENV["GUROBI_HOME"] = "/usr/local")
+haskey(ENV, "GUROBI_JL_USE_GUROBI_JLL") == false && (ENV["GUROBI_JL_USE_GUROBI_JLL"] = "false")
 haskey(ENV, "XPRESSDIR") == false && (ENV["XPRESSDIR"] = "/usr/local")
 
 Sys.KERNEL == :Darwin && Sys.ARCH == :x86_64 && push!(pkgall, "CPLEX")

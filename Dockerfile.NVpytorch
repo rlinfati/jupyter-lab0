@@ -1,0 +1,22 @@
+ARG VER_CONTAINER=24.11-py3
+FROM nvcr.io/nvidia/pytorch:$VER_CONTAINER
+
+USER root
+WORKDIR /tmp/
+
+ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}:/usr/local/libnvidia"
+EXPOSE 8888/tcp
+
+RUN python -m pip --no-cache-dir install jupyterhub && \
+    jupyter --version && \
+    jupyterhub --version
+
+ENTRYPOINT ["jupyterhub-singleuser"]
+CMD [""]
+HEALTHCHECK CMD curl http://127.0.0.1:8888 || exit 1
+
+RUN useradd --create-home --no-user-group jovyan
+VOLUME /home/jovyan/work
+
+USER jovyan
+WORKDIR /home/jovyan/

@@ -5,6 +5,7 @@ Image=docker.io/library/caddy
 AutoUpdate=registry
 RunInit=true
 Exec=caddy reverse-proxy --from radio.ubb.menoscero.com --to http://synco.ubb.menoscero.com:8888
+HealthCmd=nc -z 127.0.0.1 443 || exit 1
 Network=vlan130-synco.network
 IP=146.83.193.156
 

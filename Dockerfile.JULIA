@@ -9,32 +9,35 @@ ARG CPU_TARGET="generic;sandybridge,-xsaveopt,clone_all;haswell,-rdrnd,base(1);x
 ENV JULIA_CPU_TARGET=$CPU_TARGET
 
 ARG JULIA_VERSION=1.11
-#FIXME ARG CONDA_JL_HOME=/opt/conda
 ARG UNAMEM1=x64
 
+ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}:/usr/local/libnvidia"
 EXPOSE 8888/tcp
 
 # unix tools: git, top, unzip, zip
 RUN dnf --assumeyes install git-core procps-ng unzip zip && \
     dnf clean all
 
-# Jupyter LAB and Pluto
+# Jupyter LAB
 RUN curl --remote-name https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-$(uname -m).sh && \
     bash Miniconda3-latest-Linux-$(uname -m).sh -b -p /opt/conda && \
-    conda install --yes jupyterlab jupyterhub-singleuser && \
-    conda install --yes --channel defaults --channel conda-forge jupyter-pluto-proxy && \
+    conda install --yes jupyterlab && \
+    conda install --yes jupyterhub-singleuser && \
+    conda install --yes nb_conda_kernels && \
+    #conda install --yes conda-forge::jupyter-pluto-proxy && \
     rm Miniconda3-latest-Linux-$(uname -m).sh && \
     conda clean --all --yes && \
+    conda info && \
     jupyter --version && \
     jupyterhub --version
 
 # Julia
 RUN if [ "x${JULIA_VERSION}" = "xnightly" ]; then \
-    JULIA_URL=https://julialangnightlies-s3.julialang.org/bin/linux/$(uname -m) ;\
-    JULIA_FILE=julia-latest-linux-$(uname -m).tar.gz ;\
+        JULIA_URL=https://julialangnightlies-s3.julialang.org/bin/linux/$(uname -m) ;\
+        JULIA_FILE=julia-latest-linux-$(uname -m).tar.gz ;\
     else \
-    JULIA_URL=https://julialang-s3.julialang.org/bin/linux/${UNAMEM1}/${JULIA_VERSION} ;\
-    JULIA_FILE=julia-${JULIA_VERSION}-latest-linux-$(uname -m).tar.gz ;\
+        JULIA_URL=https://julialang-s3.julialang.org/bin/linux/${UNAMEM1}/${JULIA_VERSION} ;\
+        JULIA_FILE=julia-${JULIA_VERSION}-latest-linux-$(uname -m).tar.gz ;\
     fi && \
     mkdir /opt/julia-${JULIA_VERSION} && \
     curl --location --remote-name ${JULIA_URL}/${JULIA_FILE} && \
@@ -65,7 +68,7 @@ RUN conda create --yes --name pyxpr --no-deps --channel fico-xpress xpress=9.4 x
 
 ENTRYPOINT ["jupyterhub-singleuser"]
 CMD [""]
-HEALTHCHECK CMD curl --fail http://127.0.0.1:8888$$JUPYTERHUB_SERVICE_PREFIX || exit 1
+HEALTHCHECK CMD curl http://127.0.0.1:8888 || exit 1
 
 RUN useradd --create-home --no-user-group jovyan
 VOLUME /home/jovyan/work
@@ -75,5 +78,5 @@ WORKDIR /home/jovyan/
 
 COPY setup.jl /opt/
 RUN julia --threads auto --eval "using InteractiveUtils; versioninfo(); @ccall jl_dump_host_cpu()::Cvoid"
-RUN julia --threads auto --eval "import Pkg; Pkg.add(\"IJulia\"); Pkg.add(\"Pluto\")"
+RUN julia --threads auto --eval "import Pkg; Pkg.add(\"IJulia\")"
 RUN julia --threads auto /opt/setup.jl

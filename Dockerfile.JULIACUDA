@@ -1,0 +1,16 @@
+ARG VER_CONTAINER=julia-999
+FROM rlinfati/jupyter-lab0:$VER_CONTAINER
+
+RUN julia --threads auto --eval "using InteractiveUtils; versioninfo(); @ccall jl_dump_host_cpu()::Cvoid"
+
+RUN julia --threads auto <<EOF
+    import Pkg
+    Pkg.add("CUDA")
+    import CUDA
+    CUDA.set_runtime_version!(v"12.2")
+EOF
+
+RUN julia --threads auto <<EOF
+    import CUDA
+    CUDA.precompile_runtime()
+EOF
