@@ -7,6 +7,7 @@ RunInit=true
 Volume=jupyter-user-CUDAlab:/home/jovyan/work
 PublishPort=8888:8888
 ShmSize=1024m
+PodmanArgs=--oom-score-adj=999
 PodmanArgs=--device=nvidia.com/gpu=all
 
 [Install]

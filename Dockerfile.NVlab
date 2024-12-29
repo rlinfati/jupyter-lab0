@@ -1,0 +1,19 @@
+ARG VER_CONTAINER=24.11-py3
+FROM nvcr.io/nvidia/pytorch:$VER_CONTAINER
+
+USER root
+WORKDIR /tmp/
+
+ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/usr/local/libnvidia"
+
+RUN jupyter --version
+
+EXPOSE 8888/tcp
+ENTRYPOINT ["jupyter-lab"]
+CMD ["--no-browser", "--ip=0.0.0.0"]
+HEALTHCHECK CMD curl --fail http://127.0.0.1:8888/lab || exit 1
+
+RUN useradd --create-home --no-user-group jovyan
+VOLUME /home/jovyan/work
+USER jovyan
+WORKDIR /home/jovyan/

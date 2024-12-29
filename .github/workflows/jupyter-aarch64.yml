@@ -1,0 +1,39 @@
+name: Jupyter AArch64
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+# Dockerfile.HUB
+      - uses: docker/build-push-action@v5
+        with:
+          #push: true
+          file: Dockerfile.HUB
+          tags: rlinfati/jupyter-lab0:hub-999
+          platforms: linux/arm64
+# Dockerfile.JULIA
+      - uses: docker/build-push-action@v5
+        with:
+          #push: true
+          file: Dockerfile.JULIA
+          secrets: |
+            "GUROBIWLS=${{ secrets.GUROBIWLS }}"
+          build-args: |
+            UNAMEM1=aarch64
+            CPU_TARGET=generic
+          tags: rlinfati/jupyter-lab0:julia-999
+          platforms: linux/arm64
+# Dockerfile.Anaconda
+      - uses: docker/build-push-action@v5
+        with:
+          #push: true
+          file: Dockerfile.Anaconda
+          tags: rlinfati/jupyter-lab0:Anaconda-999
+          platforms: linux/arm64
