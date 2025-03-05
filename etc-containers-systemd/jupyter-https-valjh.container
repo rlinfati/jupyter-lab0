@@ -2,8 +2,10 @@
 
 [Container]
 Image=docker.io/library/caddy
+AutoUpdate=registry
 RunInit=true
 Exec=caddy reverse-proxy --from valjh.menoscero.com --to http://systemd-jupyter-hub:8000
+HealthCmd=nc -z 127.0.0.1 443 || exit 1
 PublishPort=80:80
 PublishPort=443:443
 

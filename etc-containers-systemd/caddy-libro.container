@@ -4,7 +4,8 @@
 Image=docker.io/library/caddy
 AutoUpdate=registry
 RunInit=true
-Exec=caddy file-server --root /usr/share/caddy/ --domain apple.ubb.menoscero.com
+Exec=caddy file-server --root /usr/share/caddy/ --domain libro.ubb.menoscero.com
+HealthCmd=nc -z 127.0.0.1 443 || exit 1
 Network=vlan130-cosyn.network
 IP=146.83.193.154
 
