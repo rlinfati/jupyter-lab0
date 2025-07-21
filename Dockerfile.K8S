@@ -19,7 +19,7 @@ RUN conda install --quiet --yes jupyterhub && \
     conda clean --all --yes && \
     jupyterhub --version
 
-COPY jupyterhub_config_k8s.py /opt/
+COPY jupyterk8s_config.py /opt/
 
 EXPOSE 8000/tcp
 ENTRYPOINT ["jupyterhub"]

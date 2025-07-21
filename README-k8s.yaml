@@ -1,0 +1,276 @@
+# kubectl delete namespace jupyter-k8s
+# kubectl delete storageclass jupyter-localpath-sc
+# kubectl delete clusterrole jupyter-localpath-role
+# kubectl delete clusterrolebinding jupyter-localpath-rolebinding
+# kubectl delete persistentvolumeclaim --all -n jupyter-k8s
+# kubectl delete persistentvolume --all
+# mkdir --context=unconfined_u:object_r:container_file_t:s0 /opt/jupyter-localpath
+# kubectl apply -f https://raw.githubusercontent.com/rlinfati/jupyter-lab0/refs/heads/master/jupyterhub-k8s.yaml
+# kubectl get all -n jupyter-k8s
+# kubectl get all,pv,pvc,sc -n jupyter-k8s
+# kubectl logs deployment/jupyter-hub -n jupyter-k8s
+# kubectl logs deployment/jupyter-cloudflared -n jupyter-k8s
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: jupyter-k8s
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: jupyter-sa
+  namespace: jupyter-k8s
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: jupyter-role
+  namespace: jupyter-k8s
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "services", "persistentvolumeclaims"]
+    verbs: ["get", "watch", "list", "create", "delete"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["get", "watch", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: jupyter-rolebinding
+  namespace: jupyter-k8s
+subjects:
+  - kind: ServiceAccount
+    name: jupyter-sa
+    namespace: jupyter-k8s
+roleRef:
+  kind: Role
+  name: jupyter-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jupyter-hub
+  namespace: jupyter-k8s
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jupyter-hub-label
+  template:
+    metadata:
+      labels:
+        app: jupyter-hub-label
+    spec:
+      serviceAccountName: jupyter-sa
+      containers:
+      - name: jupyter-container
+        image: docker.io/rlinfati/jupyter-lab0:k8s-999
+        ports:
+        - containerPort: 8000
+        - containerPort: 8001
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jupyter-www
+  namespace: jupyter-k8s
+spec:
+  selector:
+    app: jupyter-hub-label
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8000
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jupyter-api
+  namespace: jupyter-k8s
+spec:
+  selector:
+    app: jupyter-hub-label
+  ports:
+  - protocol: TCP
+    port: 8001
+    targetPort: 8001
+  type: ClusterIP
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: jupyter-localpath-sa
+  namespace: jupyter-k8s
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: jupyter-localpath-role
+  namespace: jupyter-k8s
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch", "create", "patch", "update", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: jupyter-localpath-role
+  namespace: jupyter-k8s
+rules:
+  - apiGroups: [""]
+    resources: ["nodes", "persistentvolumeclaims", "configmaps", "pods", "pods/log"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["persistentvolumes"]
+    verbs: ["get", "list", "watch", "create", "patch", "update", "delete"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["storageclasses"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: jupyter-localpath-rolebinding
+  namespace: jupyter-k8s
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: jupyter-localpath-role
+subjects:
+  - kind: ServiceAccount
+    name: jupyter-localpath-sa
+    namespace: jupyter-k8s
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: jupyter-localpath-rolebinding
+  namespace: jupyter-k8s
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: jupyter-localpath-role
+subjects:
+  - kind: ServiceAccount
+    name: jupyter-localpath-sa
+    namespace: jupyter-k8s
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jupyter-localpath
+  namespace: jupyter-k8s
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jupyter-localpath-label
+  template:
+    metadata:
+      labels:
+        app: jupyter-localpath-label
+    spec:
+      serviceAccountName: jupyter-localpath-sa
+      containers:
+        - name: jupyter-localpath-container
+          image: docker.io/rancher/local-path-provisioner:v0.0.31 # FIX v0.0.31
+          command:
+            - local-path-provisioner
+            - start
+            - --config
+            - /etc/config/config.json
+          volumeMounts:
+            - name: jupyter-localpath-config
+              mountPath: /etc/config/
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: SERVICE_ACCOUNT_NAME
+              value: jupyter-localpath-sa
+            - name: CONFIG_MOUNT_PATH
+              value: /etc/config/
+      volumes:
+        - name: jupyter-localpath-config
+          configMap:
+            name: local-path-config
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: jupyter-localpath-sc
+  namespace: jupyter-k8s
+provisioner: rancher.io/local-path
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Delete
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: local-path-config
+  namespace: jupyter-k8s
+data:
+  config.json: |-
+    {
+            "nodePathMap":[ {
+                    "node": "DEFAULT_PATH_FOR_NON_LISTED_NODES",
+                    "paths": ["/opt/jupyter-localpath"]
+            } ]
+    }
+  setup: |-
+    #!/bin/sh
+    set -eu
+    mkdir -m 0755 -p "$VOL_DIR"
+    chown 1000:100 "$VOL_DIR"
+  teardown: |-
+    #!/bin/sh
+    set -eu
+    rm -rf "$VOL_DIR"
+  helperPod.yaml: |-
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: helper-pod
+    spec:
+      priorityClassName: system-node-critical
+      tolerations:
+        - key: node.kubernetes.io/disk-pressure
+          operator: Exists
+          effect: NoSchedule
+      containers:
+      - name: helper-pod
+        image: docker.io/library/busybox:stable
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jupyter-cloudflared
+  namespace: jupyter-k8s
+spec:
+  selector:
+    matchLabels:
+      app: jupyter-cloudflared-label
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: jupyter-cloudflared-label
+    spec:
+      containers:
+      - name: jupyter-cloudflared-container
+        image: docker.io/cloudflare/cloudflared:latest
+        args:
+        - tunnel
+        - --no-autoupdate
+        env:
+          - name: TUNNEL_URL
+            value: "http://jupyter-www/"

@@ -1,0 +1,70 @@
+# kubectl get pv,pvc,sc -n jupyter-k8s
+# kubectl delete -n jupyter-k8s persistentvolumeclaim/test-pvc-hostpath
+# kubectl delete -n jupyter-k8s persistentvolumeclaim/test-pvc-local
+# kubectl logs deployment/jupyter-hostpath -n jupyter-k8s
+# kubectl apply -f https://raw.githubusercontent.com/rlinfati/jupyter-lab0/refs/heads/master/jupyterhub-k8s-sc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: test-pvc-local
+  namespace: jupyter-k8s
+  annotations:
+    volumeType: "local"      
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: jupyter-hostpath-sc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: test-pvc-hostpath
+  namespace: jupyter-k8s
+  annotations:
+    volumeType: "hostPath"
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: jupyter-hostpath-sc
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-pod-local
+  namespace: jupyter-k8s
+spec:
+  containers:
+  - name: test-pod-local-container
+    image: docker.io/library/busybox:stable
+    command: [ "sleep", "5" ]
+    volumeMounts:
+    - name: test-volume-local
+      mountPath: /data
+  volumes:
+  - name: test-volume-local
+    persistentVolumeClaim:
+      claimName: test-pvc-local
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-pod-hostpath
+  namespace: jupyter-k8s
+spec:
+  containers:
+  - name: test-pod-hostpath-container
+    image: docker.io/library/busybox:stable
+    command: [ "sleep", "5" ]
+    volumeMounts:
+    - name: test-volume-hostpath
+      mountPath: /data
+  volumes:
+  - name: test-volume-hostpath
+    persistentVolumeClaim:
+      claimName: test-pvc-hostpath
