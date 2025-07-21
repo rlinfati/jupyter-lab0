@@ -1,0 +1,74 @@
+name: Jupyter Hub
+on:
+  workflow_dispatch:
+    inputs:
+      latest:
+        description: '¿Solo crear latest?'
+        required: true
+        default: false
+        type: boolean
+      fecha:
+        description: 'Fecha del tag latest (YYYY-MM-DD)'
+        required: false
+        default: 2025-07-31
+  schedule:
+    - cron: '31 13 21 * *' # minuto hora dia1-31 mes dia0-6
+jobs:
+  build:
+    if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.latest == 'false') || github.event_name == 'schedule' }}
+    strategy:
+      matrix:
+        arch:
+          - runson: ubuntu-24.04
+            tagarch: x86_64
+          - runson: ubuntu-24.04-arm
+            tagarch: aarch64
+    runs-on: ${{ matrix.arch.runson }}
+    steps:
+      - run:  echo "DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      # Dockerfile.HUB
+      - uses: docker/build-push-action@v5
+        with:
+          push: true
+          file: Dockerfile.HUB
+          tags: rlinfati/jupyter-lab0:hub-${{ matrix.arch.tagarch }}-${{ env.DATE }}
+  manifest:
+    if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.latest == 'false') || github.event_name == 'schedule' }}
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - run:  echo "DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - run: |
+          set -ex
+          DIGEST_AMD64=$(docker manifest inspect rlinfati/jupyter-lab0:hub-x86_64-${{ env.DATE }}  | jq -r '.manifests[] | select(.platform.architecture=="amd64") | .digest')
+          DIGEST_ARM64=$(docker manifest inspect rlinfati/jupyter-lab0:hub-aarch64-${{ env.DATE }} | jq -r '.manifests[] | select(.platform.architecture=="arm64") | .digest')
+          docker manifest create rlinfati/jupyter-lab0:hub-${{ env.DATE }} \
+            rlinfati/jupyter-lab0@$DIGEST_AMD64 \
+            rlinfati/jupyter-lab0@$DIGEST_ARM64
+          docker manifest push rlinfati/jupyter-lab0:hub-${{ env.DATE }}
+  latest:
+    if: ${{ github.event.inputs.latest == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - run: |
+          set -ex
+          DIGEST_AMD64=$(docker manifest inspect rlinfati/jupyter-lab0:hub-${{ github.event.inputs.fecha }} | jq -r '.manifests[] | select(.platform.architecture=="amd64") | .digest')
+          DIGEST_ARM64=$(docker manifest inspect rlinfati/jupyter-lab0:hub-${{ github.event.inputs.fecha }} | jq -r '.manifests[] | select(.platform.architecture=="arm64") | .digest')
+          docker manifest create rlinfati/jupyter-lab0:hub \
+            rlinfati/jupyter-lab0@$DIGEST_AMD64 \
+            rlinfati/jupyter-lab0@$DIGEST_ARM64
+          docker manifest push rlinfati/jupyter-lab0:hub

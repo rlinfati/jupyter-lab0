@@ -1,9 +1,5 @@
-ARG ROOT_CONTAINER=rlinfati/jupyter-lab0:julia-999
-FROM $ROOT_CONTAINER
-
-ENTRYPOINT ["jupyter-lab"]
-CMD ["--no-browser", "--ip=0.0.0.0"]
-HEALTHCHECK CMD curl --fail http://127.0.0.1:8888/lab || exit 1
+ARG VER_CONTAINER=julia
+FROM rlinfati/jupyter-lab0:$VER_CONTAINER
 
 RUN julia --threads auto --eval "using InteractiveUtils; versioninfo(); @ccall jl_dump_host_cpu()::Cvoid"
 
@@ -13,6 +9,7 @@ RUN julia --threads auto <<EOF
     import CUDA
     CUDA.set_runtime_version!(v"12.2")
 EOF
+# FIX v12.2
 
 RUN julia --threads auto <<EOF
     import CUDA

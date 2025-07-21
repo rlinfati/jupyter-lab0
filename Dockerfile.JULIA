@@ -1,79 +1,69 @@
-FROM registry.access.redhat.com/ubi9/ubi
+FROM registry.access.redhat.com/ubi9/ubi-minimal
 
 USER root
 WORKDIR /tmp/
 
 ENV PATH=$PATH:/opt/conda/bin/
 # https://github.com/JuliaCI/julia-buildkite/blob/main/utilities/build_envs.sh
-ARG CPU_TARGET="generic;sandybridge,-xsaveopt,clone_all;haswell,-rdrnd,base(1);x86-64-v4,-rdrnd,base(1)"
+#   CPU_TARGET="generic;cortex-a76,clone_all;neoverse-n1,base(1);apple-m1,base(1)"
+#   CPU_TARGET="generic;cortex-a76,clone_all;neoverse-n1,base(1)"
+#   CPU_TARGET="generic;sandybridge,-xsaveopt,clone_all;haswell,-rdrnd,base(1);x86-64-v4,-rdrnd,base(1)"
+ARG CPU_TARGET="generic"
 ENV JULIA_CPU_TARGET=$CPU_TARGET
-
 ARG JULIA_VERSION=1.11
-#FIXME ARG CONDA_JL_HOME=/opt/conda
-ARG UNAMEM1=x64
+ENV LD_LIBRARY_PATH="/usr/local/libnvidia"
+ARG CONDA_PLUGINS_AUTO_ACCEPT_TOS=true
 
-EXPOSE 8888/tcp
+RUN microdnf --assumeyes install git-core procps-ng unzip zip && \
+    microdnf --assumeyes install tar gzip findutils && \
+    microdnf clean all
 
-# unix tools: git, top, unzip, zip
-RUN dnf --assumeyes install git-core procps-ng unzip zip && \
-    dnf clean all
-
-# Jupyter LAB and Pluto
 RUN curl --remote-name https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-$(uname -m).sh && \
     bash Miniconda3-latest-Linux-$(uname -m).sh -b -p /opt/conda && \
-    conda install --yes jupyterlab jupyterhub-singleuser && \
-    conda install --yes --channel defaults --channel conda-forge jupyter-pluto-proxy && \
     rm Miniconda3-latest-Linux-$(uname -m).sh && \
+    conda clean --all --yes && \
+    conda info
+
+RUN conda install --quiet --yes jupyterlab jupyterhub-singleuser nb_conda_kernels && \
     conda clean --all --yes && \
     jupyter --version && \
     jupyterhub --version
 
-# Julia
+RUN --mount=type=secret,id=GUROBIWLS mkdir /opt/gurobi/ && \
+    cat /run/secrets/GUROBIWLS | tee /opt/gurobi/gurobi.lic
+
 RUN if [ "x${JULIA_VERSION}" = "xnightly" ]; then \
-    JULIA_URL=https://julialangnightlies-s3.julialang.org/bin/linux/$(uname -m) ;\
-    JULIA_FILE=julia-latest-linux-$(uname -m).tar.gz ;\
+        JULIA_URL=https://julialangnightlies-s3.julialang.org/bin/linux/$(uname -m) ;\
+        JULIA_FILE=julia-latest-linux-$(uname -m).tar.gz ;\
     else \
-    JULIA_URL=https://julialang-s3.julialang.org/bin/linux/${UNAMEM1}/${JULIA_VERSION} ;\
-    JULIA_FILE=julia-${JULIA_VERSION}-latest-linux-$(uname -m).tar.gz ;\
+        if [ "$(uname -m)" = "x86_64"  ]; then \
+            JULIA_URL=https://julialang-s3.julialang.org/bin/linux/x64/${JULIA_VERSION} ;\
+        else \
+            JULIA_URL=https://julialang-s3.julialang.org/bin/linux/$(uname -m)/${JULIA_VERSION} ;\
+        fi ;\
+        JULIA_FILE=julia-${JULIA_VERSION}-latest-linux-$(uname -m).tar.gz ;\
     fi && \
     mkdir /opt/julia-${JULIA_VERSION} && \
+    echo ${JULIA_URL}/${JULIA_FILE} && \
     curl --location --remote-name ${JULIA_URL}/${JULIA_FILE} && \
     tar xzf ${JULIA_FILE} -C /opt/julia-${JULIA_VERSION} --strip-components=1 && \
     rm ${JULIA_FILE} && \
     ln --symbolic /opt/julia-${JULIA_VERSION}/bin/julia /usr/local/bin/julia && \
     julia --version
 
-# GUROBIWLS
-RUN --mount=type=secret,id=GUROBIWLS mkdir /opt/gurobi/ && \
-    cat /run/secrets/GUROBIWLS | tee /opt/gurobi/gurobi.lic
-
-# CPLEX
-RUN if [[ $(uname -m) == "x86_64" ]]; then true; else exit 0; fi && \
-    conda create --yes --name pycpx --no-deps --channel ibmdecisionoptimization cplex && \
-    conda clean --all --yes && \
-    find /opt/conda/pkgs/ -type f -name libcplex*.so -ls -exec cp {} /usr/local/lib/ \;
-# Gurobi
-RUN conda create --yes --name pygrb --no-deps --channel gurobi gurobi && \
-    conda clean --all --yes && \
-    find /opt/conda/pkgs/ -type f -name libgurobi*.so -ls -exec cp {} /usr/local/lib/ \;
-# Xpress
-RUN conda create --yes --name pyxpr --no-deps --channel fico-xpress xpress=9.4 xpresslibs && \
-    conda clean --all --yes && \
-    find /opt/conda/pkgs/ -type f -name libxprs.so.* -ls -exec cp {} /usr/local/lib/libxprs.so \; && \
-    find /opt/conda/pkgs/ -type f -name libxprl-*-x9.4.so -ls -exec cp {} /usr/local/lib/libxprl.so.x9.4 \; && \
-    find /opt/conda/pkgs/ -type f -name community-xpauth.xpr -ls -exec cp {} /usr/local/xpauth.xpr \;
-
+EXPOSE 8888/tcp
 ENTRYPOINT ["jupyterhub-singleuser"]
 CMD [""]
-HEALTHCHECK CMD curl --fail http://127.0.0.1:8888$$JUPYTERHUB_SERVICE_PREFIX || exit 1
+HEALTHCHECK CMD curl http://127.0.0.1:8888 || exit 1
 
 RUN useradd --create-home --no-user-group jovyan
 VOLUME /home/jovyan/work
-
 USER jovyan
 WORKDIR /home/jovyan/
 
-COPY setup.jl /opt/
+COPY setupORlib.sh /opt/
+COPY setup.jl      /opt/
 RUN julia --threads auto --eval "using InteractiveUtils; versioninfo(); @ccall jl_dump_host_cpu()::Cvoid"
-RUN julia --threads auto --eval "import Pkg; Pkg.add(\"IJulia\"); Pkg.add(\"Pluto\")"
+RUN julia --threads auto --eval "import Pkg; Pkg.add(\"IJulia\")"
+RUN sh -e /opt/setupORlib.sh
 RUN julia --threads auto /opt/setup.jl

@@ -1,0 +1,82 @@
+name: Jupyter Julia
+on:
+  workflow_dispatch:
+    inputs:
+      latest:
+        description: '¿Solo crear latest?'
+        required: true
+        default: false
+        type: boolean
+      verx:
+        description: 'Version de Julia'
+        required: true
+        default: 110
+        type: number
+      cuda:
+        description: 'Julia con CUDA'
+        required: true
+        default: false
+        type: boolean
+      fecha:
+        description: 'Fecha del tag latest (YYYY-MM-DD)'
+        required: true
+        default: '2025-07-31'
+        type: string
+  schedule:
+    - cron: '31 13 21 * *' # minuto hora dia1-31 mes dia0-6
+jobs:
+  get_date:
+    runs-on: ubuntu-latest
+    outputs:
+      fecha: ${{ steps.set_date.outputs.fecha }}
+    steps:
+      - id: set_date
+        run: echo "fecha=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+  build:
+    if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.latest == 'false') || github.event_name == 'schedule' }}
+    strategy:
+      matrix:
+        julia:
+          - ver: "1.10"
+            verx: 110
+            cuda: false
+          - ver: "1.11"
+            verx: 111
+            cuda: true
+          - ver: "1.12"
+            verx: 112
+            cuda: false
+    needs: get_date
+    uses: ./.github/workflows/jupyter-julia-build.yml
+    with:
+      julia_ver:  ${{ matrix.julia.ver  }}
+      julia_verx: ${{ matrix.julia.verx }}
+      julia_cuda: ${{ matrix.julia.cuda }}
+      fecha:      ${{ needs.get_date.outputs.fecha }}
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN:    ${{ secrets.DOCKERHUB_TOKEN }}
+      GUROBIWLS:          ${{ secrets.GUROBIWLS }}
+  latest:
+    if: ${{ github.event.inputs.latest == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - run: |
+          set -ex
+          DIGEST_AMD64=$(docker manifest inspect rlinfati/jupyter-lab0:julia-${{ github.event.inputs.verx }}-${{ github.event.inputs.fecha }} | jq -r '.manifests[] | select(.platform.architecture=="amd64") | .digest')
+          DIGEST_ARM64=$(docker manifest inspect rlinfati/jupyter-lab0:julia-${{ github.event.inputs.verx }}-${{ github.event.inputs.fecha }} | jq -r '.manifests[] | select(.platform.architecture=="arm64") | .digest')
+          docker manifest create rlinfati/jupyter-lab0:julia-${{ github.event.inputs.verx }} \
+            rlinfati/jupyter-lab0@$DIGEST_AMD64 \
+            rlinfati/jupyter-lab0@$DIGEST_ARM64
+          docker manifest push rlinfati/jupyter-lab0:julia-${{ github.event.inputs.verx }}
+      - run: |
+          set -ex
+          DIGEST_AMD64=$(docker manifest inspect rlinfati/jupyter-lab0:julia-${{ github.event.inputs.verx }}-cuda-${{ github.event.inputs.fecha }}  | jq -r '.manifests[] | select(.platform.architecture=="amd64") | .digest')
+          docker manifest create rlinfati/jupyter-lab0:julia-${{ github.event.inputs.verx }}-cuda \
+            rlinfati/jupyter-lab0@$DIGEST_AMD64
+          docker manifest push rlinfati/jupyter-lab0:julia-${{ github.event.inputs.verx }}-cuda
+        if: ${{ github.event.inputs.cuda == 'true' }}

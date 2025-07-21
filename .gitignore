@@ -1,2 +1,7 @@
 # .gitignore
+.gitignore
 README.local
+README.secrets
+README-k8s-sc.yaml
+README-k8s.yaml
+README-k8s

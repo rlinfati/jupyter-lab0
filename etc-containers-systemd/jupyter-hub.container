@@ -1,7 +1,7 @@
 # jupyter-hub.container
 
 [Container]
-Image=docker.io/rlinfati/jupyter-lab0:hub-999
+Image=docker.io/rlinfati/jupyter-lab0:hub
 AutoUpdate=registry
 RunInit=true
 Secret=J0-admin_users
@@ -10,6 +10,8 @@ Secret=J0-client_id
 Secret=J0-client_secret
 Secret=J0-tenant_id
 Secret=J0-oauth_callback_url 
+# Secret=J0-CUDA
+# Secret=J0-CUDA1
 Volume=/run/podman/podman.sock:/var/run/docker.sock
 PublishPort=8000:8000
 PodmanArgs=--privileged

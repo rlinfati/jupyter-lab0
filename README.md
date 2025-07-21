@@ -6,7 +6,8 @@
 - printf superadmin@domain.tld | sudo podman secret create J0-admin_users -
 ## Jupyter Secrets docker
 - printf '%s\n' \
-- rlinfati/jupyter-lab0:julia-999 \
+- rlinfati/jupyter-lab0:julia-111 \
+- rlinfati/jupyter-lab0:Anaconda \
 - quay.io/jupyter/julia-notebook:latest \
 - quay.io/jupyter/scipy-notebook:latest \
 - quay.io/jupyter/r-notebook:latest \
@@ -17,7 +18,7 @@
 - printf client-id-code | sudo podman secret create J0-client_id -
 - printf client-secret-code | sudo podman secret create J0-client_secret -
 - printf tenant-id-code | sudo podman secret create J0-tenant_id -
-- printf https://server.domain.tld/hub/oauth_callback | sudo podman secret create J0-oauth_callback_url -
+- printf https://server.domain.tld/hub/oauth_callback | sudo podman secret create J0-oauth_callback_url 
 - sudo podman secret ls
 ## Jupyter Docker Stacks
 - sudo podman pull quay.io/jupyter/julia-notebook:latest
@@ -25,25 +26,15 @@
 - sudo podman pull quay.io/jupyter/r-notebook:latest
 - sudo podman pull quay.io/jupyter/tensorflow-notebook:latest
 - sudo podman pull quay.io/jupyter/pytorch-notebook:latest
-## Jupyter Lab0
-- sudo podman pull docker.io/rlinfati/jupyter-lab0:hub-999
-- sudo podman pull docker.io/rlinfati/jupyter-lab0:julia-111
-- sudo podman pull docker.io/rlinfati/jupyter-lab0:cudalab-111
 
 ## Podman network dns_enabled
 - sudo podman network inspect podman | jq .[] | sed s/dns_enabled\":\ false/dns_enabled\":\ true/g | sudo tee /etc/containers/networks/podman.json
 - sudo systemctl enable --now podman
 
-## Jupyter Build
-- sudo podman build --tag rlinfati/jupyter-lab0:hub-999     github.com/rlinfati/jupyter-lab0 --file Dockerfile.HUB
-- sudo podman build --tag rlinfati/jupyter-lab0:hub-999     github.com/rlinfati/jupyter-lab0 --file Dockerfile.ORlib
-- sudo podman build --tag rlinfati/jupyter-lab0:julia-999   github.com/rlinfati/jupyter-lab0 --file Dockerfile.JULIA
-- sudo podman build --tag rlinfati/jupyter-lab0:cudalab-999 github.com/rlinfati/jupyter-lab0 --file Dockerfile.CUDAlab
-
 ## jupyter-hub.container
 ```
 [Container]
-Image=docker.io/rlinfati/jupyter-lab0:hub-999
+Image=docker.io/rlinfati/jupyter-lab0:hub
 AutoUpdate=registry
 RunInit=true
 Secret=J0-admin_users
@@ -83,21 +74,6 @@ WantedBy=multi-user.target
 - sudo dnf install nvidia-container-toolkit
 - sudo nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
 - sudo podman run --rm -it --device=nvidia.com/gpu=all --entrypoint=bash docker.io/library/julia
-
-## jupyter-CUDAlab.container
-```
-[Container]
-Image=docker.io/rlinfati/jupyter-lab0:cudalab-111
-AutoUpdate=registry
-RunInit=true
-Volume=jupyter-user-CUDAlab:/home/jovyan/work
-PublishPort=8888:8888
-ShmSize=1024m
-PodmanArgs=--device=nvidia.com/gpu=all
-
-[Install]
-WantedBy=multi-user.target
-```
 
 ## Podman Status
 - sudo podman image ls --all
