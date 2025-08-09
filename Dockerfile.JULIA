@@ -1,17 +1,20 @@
-FROM registry.access.redhat.com/ubi9/ubi-minimal
+ARG TARGET=julia
+
+###############
+# Stage julia #
+###############
+
+FROM registry.access.redhat.com/ubi9/ubi-minimal AS julia
 
 USER root
 WORKDIR /tmp/
 
 ENV PATH=$PATH:/opt/conda/bin/
 # https://github.com/JuliaCI/julia-buildkite/blob/main/utilities/build_envs.sh
-#   CPU_TARGET="generic;cortex-a76,clone_all;neoverse-n1,base(1);apple-m1,base(1)"
 #   CPU_TARGET="generic;cortex-a76,clone_all;neoverse-n1,base(1)"
 #   CPU_TARGET="generic;sandybridge,-xsaveopt,clone_all;haswell,-rdrnd,base(1);x86-64-v4,-rdrnd,base(1)"
-ARG CPU_TARGET="generic"
-ENV JULIA_CPU_TARGET=$CPU_TARGET
+ARG JULIA_CPU_TARGET=generic
 ARG JULIA_VERSION=1.11
-ENV LD_LIBRARY_PATH="/usr/local/libnvidia"
 ARG CONDA_PLUGINS_AUTO_ACCEPT_TOS=true
 
 RUN microdnf --assumeyes install git-core procps-ng unzip zip && \
@@ -28,9 +31,6 @@ RUN conda install --quiet --yes jupyterlab jupyterhub-singleuser nb_conda_kernel
     conda clean --all --yes && \
     jupyter --version && \
     jupyterhub --version
-
-RUN --mount=type=secret,id=GUROBIWLS mkdir /opt/gurobi/ && \
-    cat /run/secrets/GUROBIWLS | tee /opt/gurobi/gurobi.lic
 
 RUN if [ "x${JULIA_VERSION}" = "xnightly" ]; then \
         JULIA_URL=https://julialangnightlies-s3.julialang.org/bin/linux/$(uname -m) ;\
@@ -61,9 +61,41 @@ VOLUME /home/jovyan/work
 USER jovyan
 WORKDIR /home/jovyan/
 
-COPY setupORlib.sh /opt/
 COPY setup.jl      /opt/
+COPY setupAMPL.sh  /opt/
+COPY setupORlib.sh /opt/
 RUN julia --threads auto --eval "using InteractiveUtils; versioninfo(); @ccall jl_dump_host_cpu()::Cvoid"
 RUN julia --threads auto --eval "import Pkg; Pkg.add(\"IJulia\")"
 RUN sh -e /opt/setupORlib.sh
 RUN julia --threads auto /opt/setup.jl
+
+####################
+# Stage julia-cuda #
+####################
+
+FROM julia AS julia-cuda
+
+ARG JULIA_CPU_TARGET=generic
+
+RUN julia --threads auto --eval "using InteractiveUtils; versioninfo(); @ccall jl_dump_host_cpu()::Cvoid"
+
+RUN julia --threads auto <<EOF
+    import Pkg
+    # Pkg.add("CUDA")
+    Pkg.add(Pkg.PackageSpec(name="CUDA", version="5.8.2"))
+    import CUDA
+    CUDA.set_runtime_version!(v"12.2")
+EOF
+# FIX CUDA 5.8.3
+# FIX RunTime v12.2
+
+RUN julia --threads auto <<EOF
+    import CUDA
+    CUDA.precompile_runtime()
+EOF
+
+#################
+# Stage $TARGET #
+#################
+
+FROM ${TARGET} AS final

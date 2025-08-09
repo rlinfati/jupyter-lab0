@@ -4,7 +4,6 @@ USER root
 WORKDIR /tmp/
 
 ENV PATH=$PATH:/opt/conda/bin/
-ENV LD_LIBRARY_PATH="/usr/local/libnvidia"
 ARG CONDA_PLUGINS_AUTO_ACCEPT_TOS=true
 
 RUN microdnf --assumeyes install git-core procps-ng unzip zip && \

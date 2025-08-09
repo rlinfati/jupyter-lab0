@@ -10,8 +10,6 @@ FROM nvcr.io/nvidia/$APP_CONTAINER:$VER_CONTAINER
 USER root
 WORKDIR /tmp/
 
-ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/usr/local/libnvidia"
-
 RUN python -m pip --no-cache-dir install jupyterhub && \
     jupyter --version && \
     jupyterhub --version
