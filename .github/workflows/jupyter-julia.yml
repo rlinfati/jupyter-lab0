@@ -56,7 +56,6 @@ jobs:
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN:    ${{ secrets.DOCKERHUB_TOKEN }}
-      GUROBIWLS:          ${{ secrets.GUROBIWLS }}
   latest:
     if: ${{ github.event.inputs.latest == 'true' }}
     runs-on: ubuntu-latest

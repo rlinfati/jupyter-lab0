@@ -62,14 +62,14 @@ CPLEX_STUDIO_BINARIES=$HOME/.orlibs/ julia --eval "import Pkg; Pkg.add(\"CPLEX\"
 GUROBI_HOME=$HOME/.orlibs/ GUROBI_JL_USE_GUROBI_JLL="false" julia --eval "import Pkg; Pkg.add(\"Gurobi\"); Pkg.build(\"Gurobi\")" && \
 XPRESSDIR=$HOME/.orlibs/ julia --eval "import Pkg; Pkg.add(\"Xpress\"); Pkg.build(\"Xpress\")"
 
-julia --eval "import CPLEX; CPLEX.Optimizer(); @show CPLEX.libcplex; @show CPLEX._get_version_number()" && \
-julia --eval "import Gurobi; Gurobi.Optimizer(); @show Gurobi.libgurobi; @show Gurobi.GRB_VERSION_MAJOR, Gurobi.GRB_VERSION_MINOR, Gurobi.GRB_VERSION_TECHNICAL" && \
-XPAUTH_PATH=$HOME/.orlibs/community-xpauth.xpr julia --eval "import Xpress; Xpress.Optimizer(); @show Xpress.libxprs; @show Xpress.getversion()"
+julia --eval "import CPLEX; @show CPLEX.libcplex; @show CPLEX._get_version_number()" && \
+julia --eval "import Gurobi; @show Gurobi.libgurobi; @show Gurobi.GRB_VERSION_MAJOR, Gurobi.GRB_VERSION_MINOR, Gurobi.GRB_VERSION_TECHNICAL" && \
+XPAUTH_PATH=$HOME/.orlibs/community-xpauth.xpr julia --eval "import Xpress; @show Xpress.libxprs; @show Xpress.getversion()"
 
 exit 0
 
 julia --eval "import Pkg; Pkg.test(\"CPLEX\")"  && \
 julia --eval "import Pkg; Pkg.test(\"Gurobi\")" && \
-XPAUTH_PATH=$HOME/.orlibs/community-xpauth.xpr julia --eval "import Pkg; Pkg.test(\"Xpress\")"
+julia --eval "import Pkg; Pkg.test(\"Xpress\")"
 
 exit 0
