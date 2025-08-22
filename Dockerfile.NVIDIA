@@ -1,5 +1,5 @@
 ARG APP_CONTAINER=pytorch
-ARG VER_CONTAINER=25.06-py3
+ARG VER_CONTAINER=25.08-py3
 FROM nvcr.io/nvidia/$APP_CONTAINER:$VER_CONTAINER
 
 # EXPOSE 8888/tcp
@@ -9,8 +9,6 @@ FROM nvcr.io/nvidia/$APP_CONTAINER:$VER_CONTAINER
 
 USER root
 WORKDIR /tmp/
-
-ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/usr/local/libnvidia"
 
 RUN python -m pip --no-cache-dir install jupyterhub && \
     jupyter --version && \

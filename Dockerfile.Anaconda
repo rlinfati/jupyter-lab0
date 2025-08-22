@@ -1,10 +1,9 @@
-FROM registry.access.redhat.com/ubi9/ubi-minimal
+FROM registry.access.redhat.com/ubi10/ubi-minimal
 
 USER root
 WORKDIR /tmp/
 
 ENV PATH=$PATH:/opt/conda/bin/
-ENV LD_LIBRARY_PATH="/usr/local/libnvidia"
 ARG CONDA_PLUGINS_AUTO_ACCEPT_TOS=true
 
 RUN microdnf --assumeyes install git-core procps-ng unzip zip && \
@@ -31,6 +30,9 @@ RUN useradd --create-home --no-user-group jovyan
 VOLUME /home/jovyan/work
 USER jovyan
 WORKDIR /home/jovyan/
+
+COPY setupAMPL.sh  /opt/
+COPY setupORlib.sh /opt/
 
 RUN conda create --quiet --yes --name Anaconda anaconda && \
     conda clean --all --yes
