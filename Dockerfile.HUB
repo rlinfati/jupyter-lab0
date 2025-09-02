@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi9/ubi-minimal
+FROM registry.access.redhat.com/ubi10/ubi-minimal
 
 USER root
 WORKDIR /tmp/
@@ -14,15 +14,11 @@ RUN curl --remote-name https://repo.anaconda.com/miniconda/Miniconda3-latest-Lin
 
 RUN conda install --quiet --yes jupyterhub && \
     conda install --quiet --yes oauthenticator && \
-    conda install --quiet --yes conda-forge::dockerspawner && \
+    conda install --quiet --yes conda-forge::jupyterhub-kubespawner && \
     conda install --quiet --yes conda-forge::jupyterhub-idle-culler && \
     conda clean --all --yes && \
     jupyterhub --version
 
-ENV DOCKER_HOST=unix://var/run/docker.sock
-COPY jupyterhub_config.py /opt/
-
 EXPOSE 8000/tcp
 ENTRYPOINT ["jupyterhub"]
-CMD ["--JupyterHub.config_file=/opt/jupyterhub_config.py"]
-HEALTHCHECK CMD curl --fail http://127.0.0.1:8000/hub/ || exit 1
+CMD ["--JupyterHub.config_file=/etc/jupyterhub/jupyterhub_config.py"]

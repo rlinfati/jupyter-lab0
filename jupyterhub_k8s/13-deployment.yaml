@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jupyterhub-hub
+  namespace: jupyterhub-k8s
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jupyterhub-label
+  template:
+    metadata:
+      labels:
+        app: jupyterhub-label
+    spec:
+      serviceAccountName: jupyterhub-sa
+      containers:
+      - name: jupyterhub-container
+        image: docker.io/rlinfati/jupyter-lab0:hub
+        volumeMounts:
+        - name: jh-oauth
+          mountPath: /etc/jupyterhub/secrets
+        - name: jh-profiles
+          mountPath: /etc/jupyterhub/profiles
+        - name: jh-config
+          mountPath: /etc/jupyterhub/jupyterhub_config.py
+          subPath: jupyterhub_config.py
+        ports:
+        - containerPort: 8000
+        - containerPort: 8001
+      volumes:
+      - name: jh-oauth
+        secret:
+          secretName: jupyterhub-oauth
+      - name: jh-profiles
+        configMap:
+          name: jupyterhub-profiles
+      - name: jh-config
+        configMap:
+          name: jupyterhub-config

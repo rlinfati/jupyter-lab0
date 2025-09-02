@@ -1,16 +1,13 @@
 ARG APP_CONTAINER=pytorch
-ARG VER_CONTAINER=25.06-py3
+ARG VER_CONTAINER=25.08-py3
 FROM nvcr.io/nvidia/$APP_CONTAINER:$VER_CONTAINER
 
 # EXPOSE 8888/tcp
 # ENTRYPOINT ["jupyter-lab"]
 # CMD ["--no-browser", "--ip=0.0.0.0"]
-# HEALTHCHECK CMD curl --fail http://127.0.0.1:8888/lab || exit 1
 
 USER root
 WORKDIR /tmp/
-
-ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/usr/local/libnvidia"
 
 RUN python -m pip --no-cache-dir install jupyterhub && \
     jupyter --version && \
@@ -19,7 +16,6 @@ RUN python -m pip --no-cache-dir install jupyterhub && \
 EXPOSE 8888/tcp
 ENTRYPOINT ["jupyterhub-singleuser"]
 CMD [""]
-HEALTHCHECK CMD curl http://127.0.0.1:8888 || exit 1
 
 RUN useradd --create-home --no-user-group jovyan
 VOLUME /home/jovyan/work

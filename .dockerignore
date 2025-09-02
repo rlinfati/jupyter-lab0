@@ -1,10 +1,10 @@
 # .dockerignore
+.dockerignore
 .git
 .github
-etc-containers-systemd
-.dockerignore
 .gitignore
-lab0-backup.sh
-lab0-refresh.sh
+etc-containers-systemd
+jupyterhub_k8s
 LICENSE
 README.md
+lab0-refresh.sh

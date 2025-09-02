@@ -19,8 +19,6 @@ on:
         required: true
       DOCKERHUB_TOKEN:
         required: true
-      GUROBIWLS:
-        required: true
 jobs:
   build:
     continue-on-error: ${{ inputs.julia_ver == '1.12' }}
@@ -41,25 +39,26 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      # Dockerfile.JULIA
+      # Dockerfile.JULIA - julia
       - uses: docker/build-push-action@v5
         with:
           push: true
           file: Dockerfile.JULIA
-          secrets: |
-            "GUROBIWLS=${{ secrets.GUROBIWLS }}"
           build-args: |
-            CPU_TARGET=${{ matrix.arch.cpuarch }}
+            TARGET=julia
+            JULIA_CPU_TARGET=${{ matrix.arch.cpuarch }}
             JULIA_VERSION=${{ inputs.julia_ver }}
           tags: rlinfati/jupyter-lab0:julia-${{ inputs.julia_verx }}-${{ matrix.arch.tagarch }}-${{ inputs.fecha }}
-      # Dockerfile.JULIACUDA
+      # Dockerfile.JULIA - julia-cuda
       - uses: docker/build-push-action@v5
         if: ${{ inputs.julia_cuda && matrix.arch.tagarch == 'x86_64' }}
         with:
           push: true
-          file: Dockerfile.JULIACUDA
+          file: Dockerfile.JULIA
           build-args: |
-            VER_CONTAINER=julia-${{ inputs.julia_verx }}-${{ matrix.arch.tagarch }}-${{ inputs.fecha }}
+            TARGET=julia-cuda
+            JULIA_CPU_TARGET=${{ matrix.arch.cpuarch }}
+            JULIA_VERSION=${{ inputs.julia_ver }}
           tags: rlinfati/jupyter-lab0:julia-${{ inputs.julia_verx }}-cuda-${{ matrix.arch.tagarch }}-${{ inputs.fecha }}
   manifest:
     continue-on-error: ${{ inputs.julia_ver == '1.12' }}

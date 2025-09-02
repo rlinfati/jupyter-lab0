@@ -8,7 +8,7 @@ jobs:
       matrix:
         nvidia:
           - app: pytorch
-            ver: 25.06-py3
+            ver: 25.08-py3
           - app: tensorflow
             ver: 25.02-tf2-py3
     steps:

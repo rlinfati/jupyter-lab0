@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jupyterhub-caddy
+  namespace: jupyterhub-k8s
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jupyterhub-caddy-label
+  template:
+    metadata:
+      labels:
+        app: jupyterhub-caddy-label
+    spec:
+      containers:
+      - name: jupyterhub-caddy-container
+        image: docker.io/library/caddy:alpine
+        args:
+          - "caddy"
+          - "reverse-proxy"
+          - "--from"
+          - "jupyterhub.home.arpa"
+          #- "synco.ubb.menoscero.com"
+          #- "cosyn.ubb.menoscero.com"
+          #- "grujh.menoscero.com"
+          #- "valjh.menoscero.com"
+          - "--to"
+          - "http://jupyterhub-www.jupyterhub-k8s.svc.cluster.local:8000"
+          - "--internal-certs"
+        ports:
+        - name: http
+          containerPort: 80
+          hostPort:      80
+        - name: https
+          containerPort: 443
+          hostPort:      443
